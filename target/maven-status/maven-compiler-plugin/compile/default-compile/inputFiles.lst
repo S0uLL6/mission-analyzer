@@ -1,0 +1,11 @@
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/App.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/model/Curse.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/model/Mission.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/model/Sorcerer.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/model/Technique.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/parser/JsonParser.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/parser/MissionParser.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/parser/ParserFactory.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/parser/TxtParser.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/parser/XmlParser.java
+/Users/mak/Downloads/mission-analyzer/src/main/java/org/jujutsu/ui/MainWindow.java

@@ -1,0 +1,12 @@
+org/jujutsu/App.class
+org/jujutsu/parser/ParserFactory.class
+org/jujutsu/model/Technique.class
+org/jujutsu/model/Mission.class
+org/jujutsu/model/Sorcerer.class
+org/jujutsu/ui/MainWindow.class
+org/jujutsu/ui/MainWindow$MissionCell.class
+org/jujutsu/parser/TxtParser.class
+org/jujutsu/model/Curse.class
+org/jujutsu/parser/XmlParser.class
+org/jujutsu/parser/MissionParser.class
+org/jujutsu/parser/JsonParser.class
