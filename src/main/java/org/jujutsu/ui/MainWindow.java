@@ -71,7 +71,7 @@ public class MainWindow {
         bar.setPadding(new Insets(14, 20, 14, 20));
         bar.setStyle("-fx-background-color: #16213e;");
 
-        Text title = new Text("⚔  Анализатор миссий — Токийский магический колледж");
+        Text title = new Text("Анализатор миссий — Токийский магический колледж");
         title.setFill(Color.web("#e2b96f"));
         title.setFont(Font.font("System", FontWeight.BOLD, 15));
 
@@ -114,10 +114,10 @@ public class MainWindow {
         detail.setStyle("-fx-background-color: #1a1a2e;");
 
         detail.getChildren().addAll(
-                buildSection("📋 Общая информация", buildGeneralGrid()),
-                buildSection("👁 Проклятие", buildCurseGrid()),
-                buildSection("🧙 Участники операции", sorcererTable),
-                buildSection("⚡ Применённые техники", techniqueTable),
+                buildSection("Общая информация", buildGeneralGrid()),
+                buildSection("Проклятие", buildCurseGrid()),
+                buildSection("Участники операции", sorcererTable),
+                buildSection("Применённые техники", techniqueTable),
                 buildNoteSection()
         );
 
@@ -174,7 +174,7 @@ public class MainWindow {
         box.setPadding(new Insets(10));
         box.setStyle("-fx-background-color: #16213e; -fx-border-color: #2d3748; -fx-border-radius: 4;");
 
-        Label header = new Label("📝 Примечание");
+        Label header = new Label("Примечание");
         header.setFont(Font.font("System", FontWeight.BOLD, 13));
         header.setTextFill(Color.web("#e2b96f"));
 
