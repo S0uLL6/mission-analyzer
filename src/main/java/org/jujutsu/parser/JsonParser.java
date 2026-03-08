@@ -28,7 +28,7 @@ public class JsonParser implements MissionParser {
         mission.setOutcome(root.path("outcome").asText(""));
         mission.setDamageCost(root.path("damageCost").asLong(0));
         String note = root.path("note").asText(null);
-        mission.setNote(note.isBlank() ? null : note);
+        mission.setNote((note == null || note.isBlank()) ? null : note);
 
         JsonNode curseNode = root.path("curse");
         Curse curse = new Curse();
