@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
@@ -25,14 +26,24 @@ import java.util.Locale;
 
 public class MainWindow {
 
+    private static final String BG      = "#1a1a2e";
+    private static final String PANEL   = "#16213e";
+    private static final String CARD    = "#0f1f3d";
+    private static final String ACCENT  = "#e2b96f";
+    private static final String BORDER  = "#2d3748";
+    private static final String TEXT    = "#e2e8f0";
+    private static final String MUTED   = "#a0aec0";
+    private static final String SUCCESS = "#48bb78";
+    private static final String FAIL    = "#fc8181";
+
     private final Stage stage;
     private final ObservableList<Mission> missions = FXCollections.observableArrayList();
-    private final ListView<Mission> missionList = new ListView<>(missions);
+    private final ListView<Mission> missionList    = new ListView<>(missions);
 
-    private final Label lblId          = lbl(""), lblDate     = lbl(""),
-                        lblLocation    = lbl(""), lblOutcome  = lbl(""),
+    private final Label lblId          = lbl(""), lblDate      = lbl(""),
+                        lblLocation    = lbl(""), lblOutcome   = lbl(""),
                         lblDamage      = lbl(""), lblCurseName = lbl(""),
-                        lblCurseThreat = lbl(""), lblNote     = lbl("");
+                        lblCurseThreat = lbl(""), lblNote      = lbl("");
 
     private final TableView<Sorcerer>  sorcTable = new TableView<>();
     private final TableView<Technique> techTable = new TableView<>();
@@ -41,7 +52,7 @@ public class MainWindow {
 
     public BorderPane buildLayout() {
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #1a1a2e;");
+        root.setStyle("-fx-background-color: " + BG + ";");
         root.setTop(buildTopBar());
         root.setLeft(buildLeftPanel());
         root.setCenter(buildDetailPanel());
@@ -58,18 +69,17 @@ public class MainWindow {
                 new String[]{"Техника", "Тип", "Владелец", "Урон (¥)"},
                 new String[]{"name", "type", "owner", "damage"},
                 new int[]{200, 120, 180, 110});
-
         return root;
     }
 
     private HBox buildTopBar() {
         Text title = new Text("Анализатор миссий — Токийский магический колледж");
-        title.setFill(Color.web("#e2b96f"));
+        title.setFill(Color.web(ACCENT));
         title.setFont(Font.font("System", FontWeight.BOLD, 15));
 
         Button btn = new Button("Открыть файл миссии");
-        btn.setStyle("-fx-background-color: #e2b96f; -fx-text-fill: #1a1a2e;" +
-                     "-fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 6 14;");
+        btn.setStyle("-fx-background-color: " + ACCENT + "; -fx-text-fill: " + BG + ";" +
+                     "-fx-font-weight: bold; -fx-background-radius: 5; -fx-padding: 7 16;");
         btn.setOnAction(e -> openFile());
 
         Region spacer = new Region();
@@ -78,22 +88,24 @@ public class MainWindow {
         HBox bar = new HBox(12, title, spacer, btn);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(14, 20, 14, 20));
-        bar.setStyle("-fx-background-color: #16213e;");
+        bar.setStyle("-fx-background-color: " + PANEL + "; -fx-border-color: " + BORDER + "; -fx-border-width: 0 0 1 0;");
         return bar;
     }
 
     private VBox buildLeftPanel() {
-        Label header = new Label("Загруженные миссии");
-        header.setFont(Font.font("System", FontWeight.BOLD, 13));
-        header.setTextFill(Color.web("#a0aec0"));
+        Label header = new Label("МИССИИ");
+        header.setFont(Font.font("System", FontWeight.BOLD, 10));
+        header.setTextFill(Color.web(MUTED));
+        header.setMaxWidth(Double.MAX_VALUE);
+        header.setPadding(new Insets(12, 14, 10, 14));
+        header.setStyle("-fx-border-color: " + BORDER + "; -fx-border-width: 0 0 1 0;");
 
-        missionList.setStyle("-fx-background-color: #0f3460; -fx-border-color: #2d3748;");
+        missionList.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
         VBox.setVgrow(missionList, Priority.ALWAYS);
 
-        VBox panel = new VBox(8, header, missionList);
-        panel.setPadding(new Insets(12));
-        panel.setPrefWidth(240);
-        panel.setStyle("-fx-background-color: #16213e;");
+        VBox panel = new VBox(0, header, missionList);
+        panel.setPrefWidth(230);
+        panel.setStyle("-fx-background-color: " + PANEL + "; -fx-border-color: " + BORDER + "; -fx-border-width: 0 1 0 0;");
         return panel;
     }
 
@@ -106,52 +118,60 @@ public class MainWindow {
         addRow(general, 4, "Ущерб:",     lblDamage);
 
         GridPane curse = grid();
-        addRow(curse, 0, "Название:",        lblCurseName);
-        addRow(curse, 1, "Уровень угрозы:",  lblCurseThreat);
+        addRow(curse, 0, "Название:",       lblCurseName);
+        addRow(curse, 1, "Уровень угрозы:", lblCurseThreat);
 
-        Label noteHeader = new Label("Примечание");
-        noteHeader.setFont(Font.font("System", FontWeight.BOLD, 13));
-        noteHeader.setTextFill(Color.web("#e2b96f"));
         lblNote.setWrapText(true);
-        VBox noteBox = new VBox(6, noteHeader, lblNote);
-        noteBox.setPadding(new Insets(10));
-        noteBox.setStyle("-fx-background-color: #16213e; -fx-border-color: #2d3748; -fx-border-radius: 4;");
 
-        VBox detail = new VBox(16,
-                section("Общая информация",     general),
-                section("Проклятие",            curse),
-                section("Участники операции",   sorcTable),
-                section("Применённые техники",  techTable),
-                noteBox);
+        VBox detail = new VBox(12,
+                card("ОБЩАЯ ИНФОРМАЦИЯ",    general),
+                card("ПРОКЛЯТИЕ",           curse),
+                card("УЧАСТНИКИ ОПЕРАЦИИ",  sorcTable),
+                card("ПРИМЕНЁННЫЕ ТЕХНИКИ", techTable),
+                card("ПРИМЕЧАНИЕ",          lblNote));
         detail.setPadding(new Insets(20));
-        detail.setStyle("-fx-background-color: #1a1a2e;");
+        detail.setStyle("-fx-background-color: " + BG + ";");
 
         ScrollPane scroll = new ScrollPane(detail);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background: #1a1a2e; -fx-background-color: #1a1a2e;");
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
         return scroll;
     }
 
-    private TitledPane section(String title, javafx.scene.Node content) {
-        TitledPane p = new TitledPane(title, content);
-        p.setExpanded(true);
-        p.setStyle("-fx-text-fill: #e2b96f; -fx-background-color: #16213e;" +
-                   "-fx-border-color: #2d3748; -fx-font-weight: bold;");
-        return p;
+    private VBox card(String title, Node content) {
+        Label h = new Label(title);
+        h.setFont(Font.font("System", FontWeight.BOLD, 10));
+        h.setTextFill(Color.web(ACCENT));
+
+        HBox header = new HBox(h);
+        header.setPadding(new Insets(9, 16, 9, 16));
+        header.setStyle("-fx-background-color: #12213a;" +
+                        "-fx-background-radius: 7 7 0 0;" +
+                        "-fx-border-color: " + BORDER + "; -fx-border-width: 0 0 1 0;");
+
+        VBox body = new VBox(content);
+        body.setPadding(new Insets(12, 16, 14, 16));
+
+        VBox box = new VBox(0, header, body);
+        box.setStyle("-fx-background-color: " + CARD + ";" +
+                     "-fx-background-radius: 7; -fx-border-radius: 7;" +
+                     "-fx-border-color: " + BORDER + "; -fx-border-width: 1;");
+        return box;
     }
 
     private GridPane grid() {
         GridPane g = new GridPane();
-        g.setHgap(16); g.setVgap(8);
-        g.setPadding(new Insets(10));
-        g.setStyle("-fx-background-color: #16213e;");
+        g.setHgap(16); g.setVgap(10);
+        g.setStyle("-fx-background-color: transparent;");
         return g;
     }
 
     private void addRow(GridPane g, int row, String key, Label val) {
         Label k = new Label(key);
-        k.setTextFill(Color.web("#a0aec0"));
-        k.setFont(Font.font("System", FontWeight.BOLD, 13));
+        k.setTextFill(Color.web(MUTED));
+        k.setFont(Font.font("System", 12));
+        k.setMinWidth(110);
         g.add(k, 0, row);
         g.add(val, 1, row);
     }
@@ -164,9 +184,10 @@ public class MainWindow {
             col.setPrefWidth(widths[i]);
             table.getColumns().add(col);
         }
-        table.setStyle("-fx-background-color: #0f3460; -fx-table-cell-border-color: #2d3748;");
+        table.setStyle("-fx-background-color: transparent; -fx-table-cell-border-color: " + BORDER + ";");
         table.setPrefHeight(150);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPlaceholder(new Label(""));
     }
 
     private void openFile() {
@@ -197,17 +218,17 @@ public class MainWindow {
         lblDamage.setText(NumberFormat.getNumberInstance(Locale.of("ru")).format(m.getDamageCost()) + " ¥");
 
         lblOutcome.setText(m.getOutcome());
-        lblOutcome.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(m.getOutcome()) ? "#48bb78" : "#fc8181"));
+        lblOutcome.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(m.getOutcome()) ? SUCCESS : FAIL));
 
         if (m.getCurse() != null) {
             lblCurseName.setText(m.getCurse().getName());
             String t = m.getCurse().getThreatLevel();
             lblCurseThreat.setText(t);
             lblCurseThreat.setTextFill(switch (t.toUpperCase()) {
-                case "SPECIAL_GRADE" -> Color.web("#fc8181");
+                case "SPECIAL_GRADE" -> Color.web(FAIL);
                 case "HIGH"          -> Color.web("#f6ad55");
                 case "MEDIUM"        -> Color.web("#faf089");
-                default              -> Color.web("#e2e8f0");
+                default              -> Color.web(TEXT);
             });
         }
 
@@ -219,8 +240,8 @@ public class MainWindow {
 
     private static Label lbl(String text) {
         Label l = new Label(text);
-        l.setTextFill(Color.web("#e2e8f0"));
-        l.setFont(Font.font("System", 13));
+        l.setTextFill(Color.web(TEXT));
+        l.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
         return l;
     }
 
@@ -228,22 +249,27 @@ public class MainWindow {
         @Override
         protected void updateItem(Mission item, boolean empty) {
             super.updateItem(item, empty);
-            if (empty || item == null) { setGraphic(null); setStyle("-fx-background-color: transparent;"); return; }
+            if (empty || item == null) { setGraphic(null); setStyle("-fx-background-color: transparent; -fx-padding: 0;"); return; }
 
-            Label id  = new Label(item.getMissionId());
+            boolean sel = isSelected();
+            Label id = new Label(item.getMissionId());
             id.setFont(Font.font("System", FontWeight.BOLD, 12));
-            id.setTextFill(Color.web("#e2b96f"));
+            id.setTextFill(Color.web(sel ? ACCENT : TEXT));
 
             Label loc = new Label(item.getLocation());
             loc.setFont(Font.font("System", 11));
-            loc.setTextFill(Color.web("#a0aec0"));
+            loc.setTextFill(Color.web(MUTED));
 
             Label out = new Label(item.getOutcome());
-            out.setFont(Font.font("System", FontWeight.BOLD, 11));
-            out.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(item.getOutcome()) ? "#48bb78" : "#fc8181"));
+            out.setFont(Font.font("System", FontWeight.BOLD, 10));
+            out.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(item.getOutcome()) ? SUCCESS : FAIL));
 
-            setGraphic(new VBox(2, id, loc, out));
-            setStyle("-fx-background-color: transparent;");
+            VBox box = new VBox(3, id, loc, out);
+            box.setPadding(new Insets(9, 14, 9, sel ? 12 : 14));
+            if (sel) box.setStyle("-fx-border-color: " + ACCENT + "; -fx-border-width: 0 0 0 2;");
+
+            setGraphic(box);
+            setStyle("-fx-background-color: transparent; -fx-padding: 0;");
         }
     }
 }
