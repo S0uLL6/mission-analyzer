@@ -20,109 +20,111 @@ import org.jujutsu.parser.ParserFactory;
 
 import java.io.File;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 
 public class MainWindow {
 
     private final Stage stage;
-    private final ListView<Mission> missionList = new ListView<>();
     private final ObservableList<Mission> missions = FXCollections.observableArrayList();
+    private final ListView<Mission> missionList = new ListView<>(missions);
 
-    // Detail pane fields
-    private final Label lblId = styledLabel("");
-    private final Label lblDate = styledLabel("");
-    private final Label lblLocation = styledLabel("");
-    private final Label lblOutcome = styledLabel("");
-    private final Label lblDamage = styledLabel("");
-    private final Label lblCurseName = styledLabel("");
-    private final Label lblCurseThreat = styledLabel("");
-    private final Label lblNote = styledLabel("");
+    private final Label lblId          = lbl(""), lblDate     = lbl(""),
+                        lblLocation    = lbl(""), lblOutcome  = lbl(""),
+                        lblDamage      = lbl(""), lblCurseName = lbl(""),
+                        lblCurseThreat = lbl(""), lblNote     = lbl("");
 
-    @SuppressWarnings("unchecked")
-    private final TableView<Sorcerer> sorcererTable = new TableView<>();
-    @SuppressWarnings("unchecked")
-    private final TableView<Technique> techniqueTable = new TableView<>();
+    private final TableView<Sorcerer>  sorcTable = new TableView<>();
+    private final TableView<Technique> techTable = new TableView<>();
 
-    public MainWindow(Stage stage) {
-        this.stage = stage;
-    }
+    public MainWindow(Stage stage) { this.stage = stage; }
 
     public BorderPane buildLayout() {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #1a1a2e;");
-
         root.setTop(buildTopBar());
         root.setLeft(buildLeftPanel());
         root.setCenter(buildDetailPanel());
 
-        missionList.setItems(missions);
         missionList.setCellFactory(lv -> new MissionCell());
         missionList.getSelectionModel().selectedItemProperty()
-                .addListener((obs, old, selected) -> showMission(selected));
+                .addListener((obs, old, sel) -> showMission(sel));
+
+        setupTable(sorcTable,
+                new String[]{"Имя", "Ранг"},
+                new String[]{"name", "rank"},
+                new int[]{180, 140});
+        setupTable(techTable,
+                new String[]{"Техника", "Тип", "Владелец", "Урон (¥)"},
+                new String[]{"name", "type", "owner", "damage"},
+                new int[]{200, 120, 180, 110});
 
         return root;
     }
 
-    // ─── Top Bar ─────────────────────────────────────────────────────────────
-
     private HBox buildTopBar() {
-        HBox bar = new HBox(12);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(14, 20, 14, 20));
-        bar.setStyle("-fx-background-color: #16213e;");
-
         Text title = new Text("Анализатор миссий — Токийский магический колледж");
         title.setFill(Color.web("#e2b96f"));
         title.setFont(Font.font("System", FontWeight.BOLD, 15));
 
+        Button btn = new Button("Открыть файл миссии");
+        btn.setStyle("-fx-background-color: #e2b96f; -fx-text-fill: #1a1a2e;" +
+                     "-fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 6 14;");
+        btn.setOnAction(e -> openFile());
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnOpen = new Button("Открыть файл миссии");
-        styleButton(btnOpen);
-        btnOpen.setOnAction(e -> openFile());
-
-        bar.getChildren().addAll(title, spacer, btnOpen);
+        HBox bar = new HBox(12, title, spacer, btn);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(14, 20, 14, 20));
+        bar.setStyle("-fx-background-color: #16213e;");
         return bar;
     }
 
-    // ─── Left Panel ──────────────────────────────────────────────────────────
-
     private VBox buildLeftPanel() {
-        VBox panel = new VBox(8);
-        panel.setPadding(new Insets(12));
-        panel.setPrefWidth(240);
-        panel.setStyle("-fx-background-color: #16213e;");
-
         Label header = new Label("Загруженные миссии");
         header.setFont(Font.font("System", FontWeight.BOLD, 13));
         header.setTextFill(Color.web("#a0aec0"));
 
         missionList.setStyle("-fx-background-color: #0f3460; -fx-border-color: #2d3748;");
-        missionList.setPrefHeight(600);
         VBox.setVgrow(missionList, Priority.ALWAYS);
 
-        panel.getChildren().addAll(header, missionList);
+        VBox panel = new VBox(8, header, missionList);
+        panel.setPadding(new Insets(12));
+        panel.setPrefWidth(240);
+        panel.setStyle("-fx-background-color: #16213e;");
         return panel;
     }
 
-    // ─── Detail Panel ────────────────────────────────────────────────────────
-
     private ScrollPane buildDetailPanel() {
-        VBox detail = new VBox(16);
+        GridPane general = grid();
+        addRow(general, 0, "ID миссии:", lblId);
+        addRow(general, 1, "Дата:",      lblDate);
+        addRow(general, 2, "Локация:",   lblLocation);
+        addRow(general, 3, "Исход:",     lblOutcome);
+        addRow(general, 4, "Ущерб:",     lblDamage);
+
+        GridPane curse = grid();
+        addRow(curse, 0, "Название:",        lblCurseName);
+        addRow(curse, 1, "Уровень угрозы:",  lblCurseThreat);
+
+        Label noteHeader = new Label("Примечание");
+        noteHeader.setFont(Font.font("System", FontWeight.BOLD, 13));
+        noteHeader.setTextFill(Color.web("#e2b96f"));
+        lblNote.setWrapText(true);
+        VBox noteBox = new VBox(6, noteHeader, lblNote);
+        noteBox.setPadding(new Insets(10));
+        noteBox.setStyle("-fx-background-color: #16213e; -fx-border-color: #2d3748; -fx-border-radius: 4;");
+
+        VBox detail = new VBox(16,
+                section("Общая информация",     general),
+                section("Проклятие",            curse),
+                section("Участники операции",   sorcTable),
+                section("Применённые техники",  techTable),
+                noteBox);
         detail.setPadding(new Insets(20));
         detail.setStyle("-fx-background-color: #1a1a2e;");
-
-        detail.getChildren().addAll(
-                buildSection("Общая информация", buildGeneralGrid()),
-                buildSection("Проклятие", buildCurseGrid()),
-                buildSection("Участники операции", sorcererTable),
-                buildSection("Применённые техники", techniqueTable),
-                buildNoteSection()
-        );
-
-        buildSorcererTable();
-        buildTechniqueTable();
 
         ScrollPane scroll = new ScrollPane(detail);
         scroll.setFitToWidth(true);
@@ -130,224 +132,105 @@ public class MainWindow {
         return scroll;
     }
 
-    private TitledPane buildSection(String title, javafx.scene.Node content) {
-        TitledPane pane = new TitledPane(title, content);
-        pane.setExpanded(true);
-        pane.setStyle("""
-                -fx-text-fill: #e2b96f;
-                -fx-background-color: #16213e;
-                -fx-border-color: #2d3748;
-                -fx-font-weight: bold;
-                """);
-        return pane;
+    private TitledPane section(String title, javafx.scene.Node content) {
+        TitledPane p = new TitledPane(title, content);
+        p.setExpanded(true);
+        p.setStyle("-fx-text-fill: #e2b96f; -fx-background-color: #16213e;" +
+                   "-fx-border-color: #2d3748; -fx-font-weight: bold;");
+        return p;
     }
 
-    private GridPane buildGeneralGrid() {
-        GridPane grid = new GridPane();
-        grid.setHgap(16);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(10));
-        grid.setStyle("-fx-background-color: #16213e;");
-
-        addRow(grid, 0, "ID миссии:", lblId);
-        addRow(grid, 1, "Дата:", lblDate);
-        addRow(grid, 2, "Локация:", lblLocation);
-        addRow(grid, 3, "Исход:", lblOutcome);
-        addRow(grid, 4, "Ущерб:", lblDamage);
-        return grid;
+    private GridPane grid() {
+        GridPane g = new GridPane();
+        g.setHgap(16); g.setVgap(8);
+        g.setPadding(new Insets(10));
+        g.setStyle("-fx-background-color: #16213e;");
+        return g;
     }
 
-    private GridPane buildCurseGrid() {
-        GridPane grid = new GridPane();
-        grid.setHgap(16);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(10));
-        grid.setStyle("-fx-background-color: #16213e;");
-
-        addRow(grid, 0, "Название:", lblCurseName);
-        addRow(grid, 1, "Уровень угрозы:", lblCurseThreat);
-        return grid;
+    private void addRow(GridPane g, int row, String key, Label val) {
+        Label k = new Label(key);
+        k.setTextFill(Color.web("#a0aec0"));
+        k.setFont(Font.font("System", FontWeight.BOLD, 13));
+        g.add(k, 0, row);
+        g.add(val, 1, row);
     }
 
-    private VBox buildNoteSection() {
-        VBox box = new VBox(6);
-        box.setPadding(new Insets(10));
-        box.setStyle("-fx-background-color: #16213e; -fx-border-color: #2d3748; -fx-border-radius: 4;");
-
-        Label header = new Label("Примечание");
-        header.setFont(Font.font("System", FontWeight.BOLD, 13));
-        header.setTextFill(Color.web("#e2b96f"));
-
-        lblNote.setWrapText(true);
-        box.getChildren().addAll(header, lblNote);
-        return box;
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void setupTable(TableView table, String[] titles, String[] props, int[] widths) {
+        for (int i = 0; i < titles.length; i++) {
+            TableColumn col = new TableColumn<>(titles[i]);
+            col.setCellValueFactory(new PropertyValueFactory<>(props[i]));
+            col.setPrefWidth(widths[i]);
+            table.getColumns().add(col);
+        }
+        table.setStyle("-fx-background-color: #0f3460; -fx-table-cell-border-color: #2d3748;");
+        table.setPrefHeight(150);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
-
-    @SuppressWarnings("unchecked")
-    private void buildSorcererTable() {
-        TableColumn<Sorcerer, String> nameCol = new TableColumn<>("Имя");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        nameCol.setPrefWidth(180);
-
-        TableColumn<Sorcerer, String> rankCol = new TableColumn<>("Ранг");
-        rankCol.setCellValueFactory(new PropertyValueFactory<>("rank"));
-        rankCol.setPrefWidth(140);
-
-        sorcererTable.getColumns().addAll(nameCol, rankCol);
-        styleTable(sorcererTable);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void buildTechniqueTable() {
-        TableColumn<Technique, String> nameCol = new TableColumn<>("Техника");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-        nameCol.setPrefWidth(200);
-
-        TableColumn<Technique, String> typeCol = new TableColumn<>("Тип");
-        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
-        typeCol.setPrefWidth(120);
-
-        TableColumn<Technique, String> ownerCol = new TableColumn<>("Владелец");
-        ownerCol.setCellValueFactory(new PropertyValueFactory<>("owner"));
-        ownerCol.setPrefWidth(180);
-
-        TableColumn<Technique, Long> dmgCol = new TableColumn<>("Урон (¥)");
-        dmgCol.setCellValueFactory(new PropertyValueFactory<>("damage"));
-        dmgCol.setPrefWidth(110);
-
-        techniqueTable.getColumns().addAll(nameCol, typeCol, ownerCol, dmgCol);
-        styleTable(techniqueTable);
-    }
-
-    // ─── Logic ───────────────────────────────────────────────────────────────
 
     private void openFile() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Выберите файл миссии");
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Файлы миссий", "*.txt", "*.json", "*.xml"),
-                new FileChooser.ExtensionFilter("Все файлы", "*.*")
-        );
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Файлы миссий", "*.txt", "*.json", "*.xml"));
         File file = chooser.showOpenDialog(stage);
         if (file == null) return;
-
         try {
-            Mission mission = ParserFactory.getParser(file).parse(file);
-            // Avoid duplicates by ID
-            missions.removeIf(m -> m.getMissionId().equals(mission.getMissionId()));
-            missions.add(mission);
-            missionList.getSelectionModel().select(mission);
+            Mission m = ParserFactory.getParser(file).parse(file);
+            missions.removeIf(x -> x.getMissionId().equals(m.getMissionId()));
+            missions.add(m);
+            missionList.getSelectionModel().select(m);
         } catch (Exception ex) {
-            showError("Ошибка загрузки файла", ex.getMessage());
+            Alert alert = new Alert(Alert.AlertType.ERROR, ex.getMessage());
+            alert.setHeaderText("Ошибка загрузки файла");
+            alert.showAndWait();
         }
     }
 
     private void showMission(Mission m) {
         if (m == null) return;
-
         lblId.setText(m.getMissionId());
         lblDate.setText(m.getDate());
         lblLocation.setText(m.getLocation());
-        lblDamage.setText(formatMoney(m.getDamageCost()));
         lblNote.setText(m.getNote() != null ? m.getNote() : "—");
+        lblDamage.setText(NumberFormat.getNumberInstance(Locale.of("ru")).format(m.getDamageCost()) + " ¥");
 
-        // Outcome with color
         lblOutcome.setText(m.getOutcome());
-        if ("SUCCESS".equalsIgnoreCase(m.getOutcome())) {
-            lblOutcome.setTextFill(Color.web("#48bb78"));
-        } else if ("FAILURE".equalsIgnoreCase(m.getOutcome())) {
-            lblOutcome.setTextFill(Color.web("#fc8181"));
-        } else {
-            lblOutcome.setTextFill(Color.web("#e2e8f0"));
-        }
+        lblOutcome.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(m.getOutcome()) ? "#48bb78" : "#fc8181"));
 
         if (m.getCurse() != null) {
             lblCurseName.setText(m.getCurse().getName());
-            String threat = m.getCurse().getThreatLevel();
-            lblCurseThreat.setText(threat);
-            lblCurseThreat.setTextFill(threatColor(threat));
+            String t = m.getCurse().getThreatLevel();
+            lblCurseThreat.setText(t);
+            lblCurseThreat.setTextFill(switch (t.toUpperCase()) {
+                case "SPECIAL_GRADE" -> Color.web("#fc8181");
+                case "HIGH"          -> Color.web("#f6ad55");
+                case "MEDIUM"        -> Color.web("#faf089");
+                default              -> Color.web("#e2e8f0");
+            });
         }
 
-        sorcererTable.setItems(FXCollections.observableArrayList(
-                m.getSorcerers() != null ? m.getSorcerers() : java.util.List.of()));
-        techniqueTable.setItems(FXCollections.observableArrayList(
-                m.getTechniques() != null ? m.getTechniques() : java.util.List.of()));
+        sorcTable.setItems(FXCollections.observableArrayList(
+                m.getSorcerers() != null ? m.getSorcerers() : List.of()));
+        techTable.setItems(FXCollections.observableArrayList(
+                m.getTechniques() != null ? m.getTechniques() : List.of()));
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    private void addRow(GridPane grid, int row, String labelText, Label value) {
-        Label key = new Label(labelText);
-        key.setTextFill(Color.web("#a0aec0"));
-        key.setFont(Font.font("System", FontWeight.BOLD, 13));
-        grid.add(key, 0, row);
-        grid.add(value, 1, row);
+    private static Label lbl(String text) {
+        Label l = new Label(text);
+        l.setTextFill(Color.web("#e2e8f0"));
+        l.setFont(Font.font("System", 13));
+        return l;
     }
-
-    private static Label styledLabel(String text) {
-        Label lbl = new Label(text);
-        lbl.setTextFill(Color.web("#e2e8f0"));
-        lbl.setFont(Font.font("System", 13));
-        return lbl;
-    }
-
-    private void styleButton(Button btn) {
-        btn.setStyle("""
-                -fx-background-color: #e2b96f;
-                -fx-text-fill: #1a1a2e;
-                -fx-font-weight: bold;
-                -fx-border-radius: 4;
-                -fx-background-radius: 4;
-                -fx-padding: 6 14;
-                """);
-        btn.setOnMouseEntered(e -> btn.setStyle(btn.getStyle().replace("#e2b96f", "#c9a45a")));
-        btn.setOnMouseExited(e -> btn.setStyle(btn.getStyle().replace("#c9a45a", "#e2b96f")));
-    }
-
-    private <T> void styleTable(TableView<T> table) {
-        table.setStyle("""
-                -fx-background-color: #0f3460;
-                -fx-table-cell-border-color: #2d3748;
-                -fx-text-fill: #e2e8f0;
-                """);
-        table.setPrefHeight(150);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-    }
-
-    private Color threatColor(String threat) {
-        return switch (threat.toUpperCase()) {
-            case "SPECIAL_GRADE" -> Color.web("#fc8181");
-            case "HIGH" -> Color.web("#f6ad55");
-            case "MEDIUM" -> Color.web("#faf089");
-            default -> Color.web("#e2e8f0");
-        };
-    }
-
-    private String formatMoney(long amount) {
-        return NumberFormat.getNumberInstance(Locale.of("ru")).format(amount) + " ¥";
-    }
-
-    private void showError(String title, String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
-
-    // ─── Mission List Cell ───────────────────────────────────────────────────
 
     private static class MissionCell extends ListCell<Mission> {
         @Override
         protected void updateItem(Mission item, boolean empty) {
             super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null);
-                setGraphic(null);
-                return;
-            }
-            VBox box = new VBox(2);
-            Label id = new Label(item.getMissionId());
+            if (empty || item == null) { setGraphic(null); setStyle("-fx-background-color: transparent;"); return; }
+
+            Label id  = new Label(item.getMissionId());
             id.setFont(Font.font("System", FontWeight.BOLD, 12));
             id.setTextFill(Color.web("#e2b96f"));
 
@@ -355,14 +238,11 @@ public class MainWindow {
             loc.setFont(Font.font("System", 11));
             loc.setTextFill(Color.web("#a0aec0"));
 
-            String outcome = item.getOutcome();
-            Label out = new Label(outcome);
+            Label out = new Label(item.getOutcome());
             out.setFont(Font.font("System", FontWeight.BOLD, 11));
-            out.setTextFill("SUCCESS".equalsIgnoreCase(outcome)
-                    ? Color.web("#48bb78") : Color.web("#fc8181"));
+            out.setTextFill(Color.web("SUCCESS".equalsIgnoreCase(item.getOutcome()) ? "#48bb78" : "#fc8181"));
 
-            box.getChildren().addAll(id, loc, out);
-            setGraphic(box);
+            setGraphic(new VBox(2, id, loc, out));
             setStyle("-fx-background-color: transparent;");
         }
     }
